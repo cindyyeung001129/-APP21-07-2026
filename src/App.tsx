@@ -111,6 +111,15 @@ const DEFAULT_PLANT: PlantState = {
   height: 8,
   lastWatered: '2026-07-14'
 };
+const DEV_PLANT: PlantState = {
+  name: '小綠',
+  stage: 'blooming',
+  progress: 100,
+  wateredCount: 15,
+  height: 15,
+  lastWatered: '2026-07-21'
+};
+
 
 const isDevHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('ais-dev') || 
@@ -125,6 +134,7 @@ export default function App() {
   const [records, setRecords] = useState<CheckInRecord[]>([]);
   const [plantState, setPlantState] = useState<PlantState>(DEFAULT_PLANT);
   const [showGarden, setShowGarden] = useState(false);
+  const [gardenViewMode, setGardenViewMode] = useState<'main' | 'exchange' | 'success'>('main');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [score, setScore] = useState<number>(100);
@@ -133,6 +143,11 @@ export default function App() {
   // Load state on mount
   useEffect(() => {
     // Migration to ensure 15/15 fully bloomed stage starts immediately on first load of this update
+    const hasMigrationV3 = localStorage.getItem('garden_migration_v3');
+    if (isDevHost && !hasMigrationV3) {
+      localStorage.removeItem('mood_app_plant');
+      localStorage.setItem('garden_migration_v3', 'true');
+    }
     const hasMigrationV2 = localStorage.getItem('garden_migration_v2');
     if (!hasMigrationV2) {
       localStorage.setItem('mood_app_records', JSON.stringify(DEFAULT_RECORDS));
@@ -164,8 +179,9 @@ export default function App() {
     if (storedPlant) {
       setPlantState(JSON.parse(storedPlant));
     } else {
-      setPlantState(DEFAULT_PLANT);
-      localStorage.setItem('mood_app_plant', JSON.stringify(DEFAULT_PLANT));
+      const initialPlant = isDevHost ? DEV_PLANT : DEFAULT_PLANT;
+      setPlantState(initialPlant);
+      localStorage.setItem('mood_app_plant', JSON.stringify(initialPlant));
     }
 
     if (storedMute) {
@@ -412,6 +428,7 @@ export default function App() {
                 records={records}
                 gardenCycleOffset={gardenCycleOffset}
                 onUpdateGardenCycleOffset={saveGardenCycleOffset}
+                initialMode={gardenViewMode}
               />
             )}
 
@@ -442,6 +459,9 @@ export default function App() {
                 key={tab.id}
                 onClick={() => {
                   if (!isMuted) playClickSound(560, 'sine');
+                  if (tab.id === 'garden') {
+                    setGardenViewMode('main');
+                  }
                   setActiveTab(tab.id as any);
                   setShowGarden(false);
                 }}
@@ -467,6 +487,11 @@ export default function App() {
             onClose={() => setIsWizardOpen(false)}
             onComplete={(emoji, label, type, rsn, tgs, voiceUrl) => {
               handleCompleteCheckIn(emoji, label, type, rsn, tgs, voiceUrl);
+            }}
+            onClaimQuote={() => {
+              setIsWizardOpen(false);
+              setGardenViewMode('exchange');
+              setActiveTab('garden');
             }}
           />
         )}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PlantState, CheckInRecord } from '../types';
 import { playClickSound, playSuccessChime } from '../utils/audio';
@@ -14,6 +14,7 @@ interface GardenViewProps {
   records: CheckInRecord[];
   gardenCycleOffset: number;
   onUpdateGardenCycleOffset: (offset: number) => void;
+  initialMode?: 'main' | 'exchange' | 'success';
 }
 
 interface GiftItem {
@@ -28,7 +29,7 @@ const GIFTS: GiftItem[] = [
   {
     id: 'gift-0',
     name: '情緒語錄卡牌',
-    desc: '',
+    desc: '⭐每日打卡即可領取',
     cost: 1,
     emoji: '🃏'
   },
@@ -36,7 +37,7 @@ const GIFTS: GiftItem[] = [
     id: 'gift-1',
     name: '電子明信片',
     desc: '花園系列',
-    cost: 3,
+    cost: 2,
     emoji: '📮'
   },
   {
@@ -136,10 +137,16 @@ export default function GardenView({
   onUpdateScore,
   records,
   gardenCycleOffset,
-  onUpdateGardenCycleOffset
+  onUpdateGardenCycleOffset,
+  initialMode = 'main'
 }: GardenViewProps) {
   // Screen mode states: 'main' | 'exchange' | 'success'
-  const [mode, setMode] = useState<'main' | 'exchange' | 'success'>('main');
+  const [mode, setMode] = useState<'main' | 'exchange' | 'success'>(initialMode);
+  
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
+
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(plantState.name);
   
@@ -513,7 +520,7 @@ export default function GardenView({
                   className="text-xs font-black text-brand-sage hover:text-brand-moss flex items-center gap-1 transition active:scale-95 cursor-pointer border-0 bg-transparent"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>🎲 隨機換一句話</span>
+                  <span>隨機換一句話</span>
                 </button>
               </div>
             </div>
@@ -753,10 +760,12 @@ export default function GardenView({
                     )}
                     
                     {/* Points display */}
-                    <p className="text-xs font-black text-amber-600 flex items-center gap-1 pt-0.5">
-                      <span>⭐</span>
-                      <span>{gift.cost} 分</span>
-                    </p>
+                    {gift.id !== 'gift-0' && (
+                      <p className="text-xs font-black text-amber-600 flex items-center gap-1 pt-0.5">
+                        <span>⭐</span>
+                        <span>{gift.cost} 分</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="shrink-0 flex items-center justify-center">
@@ -764,7 +773,11 @@ export default function GardenView({
                       disabled={!isAffordable}
                       onClick={() => {
                         playClickSound(550, 'sine');
-                        setGiftToConfirm(gift);
+                        if (gift.id === 'gift-0') {
+                          handleExchange(gift);
+                        } else {
+                          setGiftToConfirm(gift);
+                        }
                       }}
                       className={`px-5 py-1.5 rounded-full text-xs font-black transition cursor-pointer text-center min-w-[70px] ${
                         isAffordable
@@ -773,7 +786,7 @@ export default function GardenView({
                       }`}
                       style={{ minHeight: '34px' }}
                     >
-                      兌換
+                      {gift.id === 'gift-0' ? '領取' : '兌換'}
                     </button>
                   </div>
                 </div>

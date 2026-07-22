@@ -50,7 +50,7 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
   const [currentPassageIdx, setCurrentPassageIdx] = useState<number>(0);
 
   // Breathing States
-  const [breathingPhase, setBreathingPhase] = useState<'idle' | 'inhale' | 'hold' | 'exhale'>('idle');
+  const [breathingPhase, setBreathingPhase] = useState<'idle' | 'inhale' | 'hold1' | 'exhale' | 'hold2'>('idle');
   const [breathingTimer, setBreathingTimer] = useState(0);
   const [breathingCycleCount, setBreathingCycleCount] = useState(0);
   const breathingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,26 +94,26 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
 
   const runInhalePhase = () => {
     setBreathingPhase('inhale');
-    setBreathingTimer(3);
+    setBreathingTimer(4);
     speakText('慢慢吸氣，感受身體放鬆。');
     
-    let counter = 3;
+    let counter = 4;
     breathingIntervalRef.current = setInterval(() => {
       counter--;
       setBreathingTimer(counter);
       if (counter <= 0) {
         clearInterval(breathingIntervalRef.current!);
-        runHoldPhase();
+        runHold1Phase();
       }
     }, 1000);
   };
 
-  const runHoldPhase = () => {
-    setBreathingPhase('hold');
-    setBreathingTimer(2);
-    speakText('屏住呼吸，安頓心靈。');
+  const runHold1Phase = () => {
+    setBreathingPhase('hold1');
+    setBreathingTimer(4);
+    speakText('閉住呼吸，安頓心靈。');
 
-    let counter = 2;
+    let counter = 4;
     breathingIntervalRef.current = setInterval(() => {
       counter--;
       setBreathingTimer(counter);
@@ -128,6 +128,22 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
     setBreathingPhase('exhale');
     setBreathingTimer(4);
     speakText('慢慢呼氣，吐出所有壓力和煩惱。');
+
+    let counter = 4;
+    breathingIntervalRef.current = setInterval(() => {
+      counter--;
+      setBreathingTimer(counter);
+      if (counter <= 0) {
+        clearInterval(breathingIntervalRef.current!);
+        runHold2Phase();
+      }
+    }, 1000);
+  };
+
+  const runHold2Phase = () => {
+    setBreathingPhase('hold2');
+    setBreathingTimer(4);
+    speakText('閉住呼吸，保持平靜。');
 
     let counter = 4;
     breathingIntervalRef.current = setInterval(() => {
@@ -234,32 +250,30 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
               className="flex-1 flex flex-col items-center justify-between space-y-3.5 w-full"
             >
               <div className="text-center space-y-1">
-                <h3 className="text-base sm:text-lg font-black text-gray-800">🌬️ 3-2-4 呼吸平復法</h3>
-                <p className="text-sm font-semibold text-brand-moss mt-0.5">吸氣 3 秒 · 憋氣 2 秒 · 呼氣 4 秒</p>
+                <h3 className="text-base sm:text-lg font-black text-gray-800">🌬️ 4-4-4-4 方形呼吸法</h3>
+                <p className="text-sm font-semibold text-brand-moss mt-0.5">吸氣 4 秒 · 閉氣 4 秒 · 呼氣 4 秒 · 閉氣 4 秒</p>
               </div>
 
               {/* Dynamic step visual card */}
               <div className="bg-gradient-to-br from-brand-sand/15 via-white to-brand-sage/10 rounded-2xl p-4 border-2 border-brand-sand/80 shadow-xs space-y-4 max-w-sm mx-auto w-full">
-                <p className="text-sm font-black text-gray-700 text-center select-none">跟著圈圈，慢慢呼吸：</p>
+                <p className="text-sm font-black text-gray-700 text-center select-none">跟著方形，慢慢呼吸：</p>
                 
                 {/* Breathing Circle Visualizer in the center */}
                 <div className="flex justify-center my-1.5">
                   <div className="relative flex items-center justify-center w-28 h-28">
                     {/* Outer pulsing ring */}
                     <motion.div
-                      className="absolute rounded-full border border-brand-sage/40"
+                      className="absolute rounded-2xl border border-brand-sage/40"
                       animate={{
                         scale:
                           breathingPhase === 'inhale' ? [1, 1.45] :
-                          breathingPhase === 'hold' ? 1.45 :
+                          breathingPhase === 'hold1' ? 1.45 :
+                          breathingPhase === 'hold2' ? 1 :
                           breathingPhase === 'exhale' ? [1.45, 1] : 1,
                         opacity: breathingPhase === 'idle' ? 0.2 : [0.5, 0.8, 0.5]
                       }}
                       transition={{
-                        duration:
-                          breathingPhase === 'inhale' ? 3 :
-                          breathingPhase === 'hold' ? 2 :
-                          breathingPhase === 'exhale' ? 4 : 2,
+                        duration: 4,
                         ease: 'easeInOut',
                         repeat: breathingPhase === 'idle' ? Infinity : 0
                       }}
@@ -268,28 +282,28 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
 
                     {/* Main animated ball */}
                     <motion.div
-                      className="w-20 h-20 rounded-full flex flex-col items-center justify-center text-center shadow-md border-2"
+                      className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center text-center shadow-md border-2"
                       style={{
                         backgroundColor:
                           breathingPhase === 'inhale' ? '#e2ece3' :
-                          breathingPhase === 'hold' ? '#fbf4e8' :
-                          breathingPhase === 'exhale' ? '#fbeee9' : '#f5f1e9',
+                          breathingPhase === 'hold1' ? '#fbf4e8' :
+                          breathingPhase === 'exhale' ? '#fbeee9' :
+                          breathingPhase === 'hold2' ? '#eef2f5' : '#f5f1e9',
                         borderColor:
                           breathingPhase === 'inhale' ? '#8ca48e' :
-                          breathingPhase === 'hold' ? '#f2cc8f' :
-                          breathingPhase === 'exhale' ? '#df7a5e' : '#a8bfa9',
+                          breathingPhase === 'hold1' ? '#f2cc8f' :
+                          breathingPhase === 'exhale' ? '#df7a5e' :
+                          breathingPhase === 'hold2' ? '#a5b4c4' : '#a8bfa9',
                       }}
                       animate={{
                         scale:
                           breathingPhase === 'inhale' ? [1, 1.45] :
-                          breathingPhase === 'hold' ? 1.45 :
+                          breathingPhase === 'hold1' ? 1.45 :
+                          breathingPhase === 'hold2' ? 1 :
                           breathingPhase === 'exhale' ? [1.45, 1] : 1,
                       }}
                       transition={{
-                        duration:
-                          breathingPhase === 'inhale' ? 3 :
-                          breathingPhase === 'hold' ? 2 :
-                          breathingPhase === 'exhale' ? 4 : 1,
+                        duration: 4,
                         ease: 'linear',
                       }}
                     >
@@ -297,7 +311,8 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
                         <span className="text-xs font-black text-gray-800 tracking-wider">
                           {breathingPhase === 'idle' && '已準備'}
                           {breathingPhase === 'inhale' && '吸氣'}
-                          {breathingPhase === 'hold' && '憋氣'}
+                          {breathingPhase === 'hold1' && '閉氣'}
+                          {breathingPhase === 'hold2' && '閉氣'}
                           {breathingPhase === 'exhale' && '呼氣'}
                         </span>
                         {breathingPhase !== 'idle' && (
@@ -315,7 +330,8 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
                   <p className="text-xs sm:text-sm font-black text-emerald-800 tracking-tight">
                     {breathingPhase === 'idle' && '準備好後按下方開始'}
                     {breathingPhase === 'inhale' && '🌟 吸氣...肚子慢慢鼓起來'}
-                    {breathingPhase === 'hold' && '⏹️ 憋住呼吸...平靜感覺'}
+                    {breathingPhase === 'hold1' && '⏹️ 閉住呼吸...平靜感覺'}
+                    {breathingPhase === 'hold2' && '⏹️ 閉住呼吸...保持平靜'}
                     {breathingPhase === 'exhale' && '🍃 慢慢呼氣...釋放所有緊繃'}
                   </p>
                 </div>
@@ -347,7 +363,7 @@ export default function FirstAidView({ onGoToHome }: FirstAidViewProps) {
                 <button
                   onClick={() => {
                     playClickSound(520, 'sine');
-                    speakText("深呼吸練習。吸氣三秒，憋氣兩秒，呼氣四秒。跟著圓圈的縮放，讓我們一起放鬆。");
+                    speakText("深呼吸練習。吸氣四秒，閉氣四秒，呼氣四秒，閉氣四秒。跟著方形的縮放，讓我們一起放鬆。");
                   }}
                   className="p-3 bg-white hover:bg-brand-sand/40 border border-brand-sand text-brand-moss rounded-xl cursor-pointer active:scale-95 transition flex items-center justify-center"
                   style={{ minHeight: '44px', minWidth: '44px' }}
